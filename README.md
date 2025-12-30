@@ -63,5 +63,7 @@ A solidity factory for launching memecoins. Anyone pays a fee to create a 1M tok
 
 ## 📄 License
 MIT
+## Author
+Krithika Damshala
 
 
