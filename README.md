@@ -1,57 +1,67 @@
-# Sample Hardhat 3 Beta Project (`mocha` and `ethers`)
+# Memecoin Factory Launchpad
 
-This project showcases a Hardhat 3 Beta project using `mocha` for tests and the `ethers` library for Ethereum interactions.
+A minimal launchpad for memcoins where users can buy tokens directly from a sale contract. 
+A solidity factory for launching memecoins. Anyone pays a fee to create a 1M token supply ERC-20, then others buy during the open sale. **No automatic liquidity pool**. Unsold tokens + raised ETH return to the **token creator** (not factory owner)
 
-To learn more about the Hardhat 3 Beta, please visit the [Getting Started guide](https://hardhat.org/docs/getting-started#getting-started-with-hardhat-3). To share your feedback, join our [Hardhat 3 Beta](https://hardhat.org/hardhat3-beta-telegram-group) Telegram group or [open an issue](https://github.com/NomicFoundation/hardhat/issues/new) in our GitHub issue tracker.
+## 🚀 Quick Demo
 
-## Project Overview
+1. Pay fee → `create("DogeKing", "DGK")`
+2. Others buy → `buy(tokenAddress, 1000e18)` (price rises every 10k tokens)
+3. Sale auto-closes at 500k tokens or 3 ETH raised
+4. Creator calls `deposit(token)` to reclaim unsold tokens + ETH
 
-This example project includes:
+## 📊 Key Specs
 
-- A simple Hardhat configuration file.
-- Foundry-compatible Solidity unit tests.
-- TypeScript integration tests using `mocha` and ethers.js
-- Examples demonstrating how to connect to different types of networks, including locally simulating OP mainnet.
+| Feature | Details |
+|---------|---------|
+| **Token Supply**  | 1,000,000 (1M) per token, 18 decimals   |
+| **Sale Limit**    | 500,000 tokens OR 3 ETH raised          |
+| **Creator Gets**  | Unsold tokens + all raised ETH          |
+| **Factory Owner** | Collects creation fees via `withdraw()` |
+| **No LP**         | Creator must add liquidity manually post-sale |
 
-## Usage
+## 🛠 Contract Functions
 
-### Running Tests
+### Create Token
+- Pays `fee` (set at deploy)
+- Deploys new ERC-20 Token contract
+- Opens sale automatically
+- Emits `Created(token)`
 
-To run all the tests in the project, execute the following command:
+### Buy Tokens
+- Calculates rising price via `getCost(sold)`
+- Transfers tokens to buyer
+- Tracks `sold`/`raised`
+- Auto-closes if limits hit
+- Emits `Buy(token, amount)`
 
-```shell
-npx hardhat test
-```
+### Claim Funds (Creator Only)
+- Only after sale closes (`!isOpen`)
+- Sends remaining tokens to `creator`
+- Sends raised ETH to `creator`
 
-You can also selectively run the Solidity or `mocha` tests:
+### Owner Withdraw
+- Factory owner pulls creation fees
 
-```shell
-npx hardhat test solidity
-npx hardhat test mocha
-```
+## 🔧 Local Testing (Foundry/Hardhat)
 
-### Make a deployment to Sepolia
 
-This project includes an example Ignition module to deploy the contract. You can deploy this module to a locally simulated chain or to Sepolia.
+## ⚠️ Warnings
+- **Rug Risk**: Creator controls unsold tokens/ETH
+- **No LP**: Tokens untradeable until creator adds DEX liquidity
+- **Gas**: Optimized for ^0.8.28
+- **Audit Needed**: For production use
 
-To run the deployment to a local chain:
+## 🤝 Contributing
 
-```shell
-npx hardhat ignition deploy ignition/modules/Counter.ts
-```
+1. Fork the repo & clone locally
+2. Create your feature branch (`git checkout -b feature/amazing-fix`)
+3. Commit changes (`git commit -m 'Add amazing fix'`)
+4. Push & create Pull Request
 
-To run the deployment to Sepolia, you need an account with funds to send the transaction. The provided Hardhat configuration includes a Configuration Variable called `SEPOLIA_PRIVATE_KEY`, which you can use to set the private key of the account you want to use.
+**Test everything**: `forge test`
 
-You can set the `SEPOLIA_PRIVATE_KEY` variable using the `hardhat-keystore` plugin or by setting it as an environment variable.
+## 📄 License
+MIT
 
-To set the `SEPOLIA_PRIVATE_KEY` config variable using `hardhat-keystore`:
 
-```shell
-npx hardhat keystore set SEPOLIA_PRIVATE_KEY
-```
-
-After setting the variable, you can run the deployment with the Sepolia network:
-
-```shell
-npx hardhat ignition deploy --network sepolia ignition/modules/Counter.ts
-```
